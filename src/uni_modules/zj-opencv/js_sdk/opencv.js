@@ -770,9 +770,10 @@
                     : filename.indexOf(dataURIPrefix) === 0;
             }
             var wasmBinaryFile ='/uni_modules/zj-opencv/static/opencv.wasm';
-            if (!isDataURI(wasmBinaryFile)) {
-                wasmBinaryFile = locateFile(wasmBinaryFile);
-            }
+            // H5运行为把路径定位到/static/js/下
+            // if (!isDataURI(wasmBinaryFile)) {
+            //     wasmBinaryFile = locateFile(wasmBinaryFile);
+            // }
             function getBinary() {
                 try {
                     if (wasmBinary) {

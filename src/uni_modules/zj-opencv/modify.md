@@ -58,7 +58,7 @@
 
 * 微信小程序中要用`WXWebAssembly`代替`WebAssembly`
 * 微信小程序没有`crypto.getRandomValues()`方法
-* 微信小程序没有`performance.now()`方法
+* 微信小程序和APP端没有`performance.now()`方法
 ```diff
      var cv = (function () {
 +        // #ifdef MP-WEIXIN
@@ -71,6 +71,8 @@
 +                }
 +            },
 +        };
++        // #endif
++        // #ifdef MP-WEIXIN||APP-PLUS
 +        var performance = {
 +            now() {
 +                return Date.now();

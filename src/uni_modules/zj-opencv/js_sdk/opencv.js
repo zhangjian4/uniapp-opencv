@@ -19,6 +19,8 @@ export default (function (root, factory) {
                 }
             },
         };
+        // #endif
+        // #ifdef MP-WEIXIN||APP-PLUS
         var performance = {
             now() {
                 return Date.now();

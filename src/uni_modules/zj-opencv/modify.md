@@ -7,6 +7,13 @@
 +// #endif
 ```
 
+* APP端没有fetch方法,用base64导入wasm
+```diff
++// #ifdef APP-PLUS
++import { wasmBinaryFile } from './wasmBinaryFile';
++// #endif
+```
+
 
 * 用作ESModule引入需要`export default`
 ```diff
@@ -94,14 +101,21 @@
 +            // #ifdef  MP-WEIXIN
 +            var wasmBinaryFile = '/uni_modules/zj-opencv/static/mp-weixin/opencv.wasm.br';
 +            // #endif
-+            // #ifdef  APP-PLUS
-+            var wasmBinaryFile = '/uni_modules/zj-opencv/static/app-plus/opencv.wasm';
-+            // #endif
 -            if (!isDataURI(wasmBinaryFile)) {
 -                wasmBinaryFile = locateFile(wasmBinaryFile);
 -            }
 ```
 
+* APP端`WebAssembly.instantiate`不会进入`then`,采用同步的方式
+```diff
+                     return getBinaryPromise()
+                         .then(function (binary) {
+-                            return WebAssembly.instantiate(binary, info);
++                            var module = new WebAssembly.Module(binary);
++                            var instance = new WebAssembly.Instance(module, info);
++                            return { instance: instance };
+                         })
+```
 
 * 微信小程序要用`WXWebAssembly.instantiate`方法传入路径,H5和APP用`WebAssembly.instantiateStreaming`
 ```diff

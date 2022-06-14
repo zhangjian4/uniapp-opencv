@@ -2,6 +2,9 @@
 // #ifdef MP-WEIXIN
 import { TextDecoder } from 'text-encoder';
 // #endif
+// #ifdef APP-PLUS
+import { wasmBinaryFile } from './wasmBinaryFile';
+// #endif
 export default (function (root, factory) {
     return factory();
 })(this, function () {
@@ -773,9 +776,6 @@ export default (function (root, factory) {
             // #ifdef  MP-WEIXIN
             var wasmBinaryFile = '/uni_modules/zj-opencv/static/mp-weixin/opencv.wasm.br';
             // #endif
-            // #ifdef  APP-PLUS
-            var wasmBinaryFile = '/uni_modules/zj-opencv/static/app-plus/opencv.wasm';
-            // #endif
             // H5运行会把路径定位到/static/js/下
             // if (!isDataURI(wasmBinaryFile)) {
             //     wasmBinaryFile = locateFile(wasmBinaryFile);
@@ -833,7 +833,9 @@ export default (function (root, factory) {
                 function instantiateArrayBuffer(receiver) {
                     return getBinaryPromise()
                         .then(function (binary) {
-                            return WebAssembly.instantiate(binary, info);
+                            var module = new WebAssembly.Module(binary);
+                            var instance = new WebAssembly.Instance(module, info);
+                            return { instance: instance };
                         })
                         .then(receiver, function (reason) {
                             err('failed to asynchronously prepare wasm: ' + reason);

@@ -35,4 +35,4 @@ cv.then(async () => {
 ```
 
 ## 其他
-[opencv.js修改明细](./modify.md)
+[opencv.js修改明细](/modify.md)

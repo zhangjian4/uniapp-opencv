@@ -9538,45 +9538,49 @@ export default (function (root, factory) {
             if (typeof Module.FS === 'undefined' && typeof FS !== 'undefined') {
                 Module.FS = FS;
             }
-            function queryNodeInfo(id){
-                return new Promise(function(resolve){
-                    uni.createSelectorQuery()
-                        .select('#' + id)
-                        .fields({ context: true, size: true, node: true },function(nodeInfo){
-                            resolve(nodeInfo);
-                        }).exec();
-                })
+            function queryNodeInfo(source) {
+                return new Promise(function (resolve) {
+                    if (typeof source === 'string') {
+                        uni.createSelectorQuery()
+                            .select('#' + source)
+                            .fields({ context: true, size: true, node: true }, function (nodeInfo) {
+                                resolve(nodeInfo);
+                            })
+                            .exec();
+                    } else {
+                        return source;
+                    }
+                });
             }
             Module['imread'] = function (imageSource) {
-                return new Promise(function (resolve, reject) {
-                    uni.createSelectorQuery()
-                        .select('#' + imageSource)
-                        .fields({ context: true, size: true, node: true }, function (result) {
-                            if (result.nodeCanvasType === '2d') {
-                                var canvas = result.node;
-                                var context = canvas.getContext('2d');
-                                var imgData = context.getImageData(
-                                    0,
-                                    0,
-                                    canvas.width,
-                                    canvas.height
-                                );
-                                resolve(imgData);
-                            } else {
-                                var context = result.context;
+                return queryNodeInfo(imageSource)
+                    .then(function (result) {
+                        if (!result || (result.nodeCanvasType !== '2d' && !result.context)) {
+                            throw new Error('Please input the valid canvas id.');
+                        }
+                        if (result.nodeCanvasType === '2d') {
+                            var canvas = result.node;
+                            var context = canvas.getContext('2d');
+                            var imgData = context.getImageData(0, 0, canvas.width, canvas.height);
+                            return imgData;
+                        } else {
+                            var context = result.context;
+                            return new Promise(function (resolve, reject) {
                                 uni.canvasGetImageData({
                                     canvasId: context.canvasId || context.id,
+                                    x: 0,
+                                    y: 0,
                                     width: result.width,
                                     height: result.height,
-                                    // success: resolve,
-                                    // fail: reject,
+                                    success: resolve,
+                                    fail: reject,
                                 });
-                            }
-                        })
-                        .exec();
-                }).then(function (imgData) {
-                    return cv.matFromImageData(imgData);
-                });
+                            });
+                        }
+                    })
+                    .then(function (imgData) {
+                        return cv.matFromImageData(imgData);
+                    });
                 var img = null;
                 if (typeof imageSource === 'string') {
                     img = document.getElementById(imageSource);
@@ -9634,42 +9638,34 @@ export default (function (root, factory) {
             }
             Module['imageDataFromMat'] = imageDataFromMat;
             Module['imshow'] = function (canvasSource, mat) {
-                var imgData = imageDataFromMat(mat);
-                return new Promise(function (resolve, reject) {
-                    uni.createSelectorQuery()
-                        .select('#' + canvasSource)
-                        .fields({ context: true, size: true, node: true }, function (result) {
-                            if (result.nodeCanvasType === '2d') {
-                                var canvas = result.node;
-                                var context = canvas.getContext('2d');
-                                // 创建ImageData对象
-                                var imageData = context.createImageData(
-                                    imgData.width,
-                                    imgData.height
-                                );
-                                // imgData.data是只读对象，但是imgData.data.set()方法可修改imgData.data。
-                                imageData.data.set(imgData.data);
-                                // 画布canvas的宽度和高度，不能比图像imgData小。
-                                canvas.width = imgData.width;
-                                canvas.height = imgData.height;
-                                // 需要传递ImageData类型，但小程序无法通过new ImageData()创建该类型。
-                                context.putImageData(imageData, 0, 0);
-                                resolve();
-                            } else {
-                                var context = result.context;
-                                uni.canvasPutImageData({
-                                    canvasId: context.canvasId || context.id,
-                                    x: 0,
-                                    y: 0,
-                                    width: imgData.width,
-                                    height: imgData.height,
-                                    data: imgData.data,
-                                    success: resolve,
-                                    fail: reject,
-                                });
-                            }
-                        })
-                        .exec();
+                return queryNodeInfo(canvasSource).then(function (result) {
+                    if (!result || (result.nodeCanvasType !== '2d' && !result.context)) {
+                        throw new Error('Please input the valid canvas id.');
+                    }
+                    var imgData = imageDataFromMat(mat);
+                    if (result.nodeCanvasType === '2d') {
+                        var canvas = result.node;
+                        var context = canvas.getContext('2d');
+                        var imageData = context.createImageData(imgData.width, imgData.height);
+                        imageData.data.set(imgData.data);
+                        canvas.width = imgData.width;
+                        canvas.height = imgData.height;
+                        context.putImageData(imageData, 0, 0);
+                    } else {
+                        var context = result.context;
+                        return new Promise(function (resolve, reject) {
+                            uni.canvasPutImageData({
+                                canvasId: context.canvasId || context.id,
+                                x: 0,
+                                y: 0,
+                                width: imgData.width,
+                                height: imgData.height,
+                                data: imgData.data,
+                                success: resolve,
+                                fail: reject,
+                            });
+                        });
+                    }
                 });
                 var canvas = null;
                 if (typeof canvasSource === 'string') {

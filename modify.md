@@ -1,4 +1,4 @@
-## opencv.js 修改部分
+# opencv.js 修改明细
 
 * 微信小程序没有`TextDecoder`
 ```diff

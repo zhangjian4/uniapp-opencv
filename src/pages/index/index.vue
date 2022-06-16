@@ -13,7 +13,7 @@ export default defineComponent({
         await this.drawImage();
         cv.then(async () => {
             const src = await cv.imread('first');
-            let dst = new cv.Mat();
+            const dst = new cv.Mat();
             // 灰度化
             cv.cvtColor(src, dst, cv.COLOR_RGBA2GRAY, 0);
             await cv.imshow('second', dst);

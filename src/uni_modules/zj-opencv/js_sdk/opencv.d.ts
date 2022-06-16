@@ -219,6 +219,8 @@ declare module opencv {
          */
         matFromImageData(imageData: ImageData): Mat;
 
+        imageDataFromMat(mat: Mat): ImageData;
+
         /**
          * Create a Mat from a data array.
          * @param rows number of rows of the Mat.
@@ -232,6 +234,8 @@ declare module opencv {
          * Function called when opencv is initialized
          */
         onRuntimeInitialized: () => void;
+
+        then(func: (cv: cv) => void): void;
 
         VideoCapture: VideoCapture;
         TermCriteria: TermCriteria;
@@ -1217,7 +1221,13 @@ declare module opencv {
             thickness: number,
             lineType: LineTypes
         ): void;
-        rectangle(img: Mat, pt1: Point, pt2: Point, color: Scalar | number[], thickness: number): void;
+        rectangle(
+            img: Mat,
+            pt1: Point,
+            pt2: Point,
+            color: Scalar | number[],
+            thickness: number
+        ): void;
         rectangle(img: Mat, pt1: Point, pt2: Point, color: Scalar | number[]): void;
 
         // Image Filtering Module
@@ -1751,7 +1761,7 @@ declare module opencv {
         OPTFLOW_LK_GET_MIN_EIGENVALS: Optflow.OPTFLOW_LK_GET_MIN_EIGENVALS;
         OPTFLOW_FARNEBACK_GAUSSIAN: Optflow.OPTFLOW_FARNEBACK_GAUSSIAN;
         rotatedRectPoints(points: RotatedRect): Point[];
-        exceptionFromPtr(pointer: number): { code: number, msg: string };
+        exceptionFromPtr(pointer: number): { code: number; msg: string };
     }
 }
 

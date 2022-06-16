@@ -206,12 +206,12 @@ declare module opencv {
          * @param canvasSource HTMLCanvas element or id of HTMLCanvas to output Mat to
          * @param mat input source mat
          */
-        imshow(canvasSource: string | HTMLCanvasElement, mat: Mat): void;
+        imshow(canvasSource: string | HTMLCanvasElement, mat: Mat): Promise<void>;
         /**
          * Reads image data from a source canvas and outputs it to an instance of cv.Mat
          * @param imageSource source canvas to read imagedata from
          */
-        imread(imageSource: string | HTMLImageElement | HTMLCanvasElement): Mat;
+        imread(imageSource: string | HTMLImageElement | HTMLCanvasElement): Promise<Mat>;
 
         /**
          * Create a Mat from the specified image data.

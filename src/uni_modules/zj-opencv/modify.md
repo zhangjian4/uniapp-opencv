@@ -405,4 +405,9 @@
 +                }).apply(null, args2);
                  return invokerFunction;
              }
-```
+``` 
+
+* 修改`imread`方法
+
+
+* 修改`imshow`方法

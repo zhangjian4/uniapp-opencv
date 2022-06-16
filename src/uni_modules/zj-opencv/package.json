@@ -4,18 +4,18 @@
   "version": "1.0.0",
   "main": "js_sdk/opencv.js",
   "types": "js_sdk/opencv.d.ts",
-  "description": "zj-opencv",
+  "description": "适配uni-app的opencv.js",
   "keywords": [
-    "zj-opencv"
+    "opencv"
 ],
-  "repository": "",
+  "repository": "https://github.com/zhangjian4/uniapp-opencv",
   "engines": {
     "HBuilderX": "^3.1.0"
   },
   "dcloudext": {
     "category": [
         "JS SDK",
-        "JS SDK"
+        "通用 SDK"
     ],
     "sale": {
       "regular": {
@@ -29,9 +29,9 @@
       "qq": ""
     },
     "declaration": {
-      "ads": "",
-      "data": "",
-      "permissions": ""
+      "ads": "无",
+      "data": "插件不采集任何数据",
+      "permissions": "无"
     },
     "npmurl": ""
   },
@@ -40,33 +40,33 @@
     "encrypt": [],
     "platforms": {
       "cloud": {
-        "tcb": "u",
-        "aliyun": "u"
+        "tcb": "y",
+        "aliyun": "y"
       },
       "client": {
         "Vue": {
-          "vue2": "u",
-          "vue3": "u"
+          "vue2": "y",
+          "vue3": "y"
         },
         "App": {
-          "app-vue": "u",
+          "app-vue": "y",
           "app-nvue": "u"
         },
         "H5-mobile": {
-          "Safari": "u",
-          "Android Browser": "u",
-          "微信浏览器(Android)": "u",
-          "QQ浏览器(Android)": "u"
+          "Safari": "y",
+          "Android Browser": "y",
+          "微信浏览器(Android)": "y",
+          "QQ浏览器(Android)": "y"
         },
         "H5-pc": {
-          "Chrome": "u",
-          "IE": "u",
-          "Edge": "u",
-          "Firefox": "u",
-          "Safari": "u"
+          "Chrome": "y",
+          "IE": "y",
+          "Edge": "y",
+          "Firefox": "y",
+          "Safari": "y"
         },
         "小程序": {
-          "微信": "u",
+          "微信": "y",
           "阿里": "u",
           "百度": "u",
           "字节跳动": "u",

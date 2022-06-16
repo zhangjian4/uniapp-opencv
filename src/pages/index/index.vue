@@ -17,6 +17,8 @@ export default defineComponent({
             // 灰度化
             cv.cvtColor(src, dst, cv.COLOR_RGBA2GRAY, 0);
             await cv.imshow('second', dst);
+            src.delete();
+            dst.delete();
         });
     },
     methods: {

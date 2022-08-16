@@ -1,4 +1,4 @@
-# zj-opencv
+# uniapp-opencv
 
 ## 介绍
 基于[opencv-ts](https://github.com/theothergrantdavidson/opencv-ts)对uni-app做了适配,目前支持**H5、微信小程序、App**,其中微信小程序适配参考了[WeChat-MiniProgram-AR-WASM](https://github.com/sanyuered/WeChat-MiniProgram-AR-WASM)。
@@ -24,15 +24,20 @@ cv.then(async () => {
 * `imread`和`imshow`方法暂时只支持传入`canvas`的`id`,**注意不是`canvas-id`**。
 * Mat对象用完一定要调用`delete`方法,否则会造成OOM。
 * 微信小程序中如果使用的不是2d的`canvas`,调试工具不支持`canvasPutImageData`,需要在真机中预览。
-* 在`Typescript`中使用时,如果引入的路径为绝对路径如`@/uni_modules/zj-opencv`,需要修改`tsconfig.json`文件
-```diff
- {
-   "compilerOptions": {
-+    "paths": {
-+      "@/*": [
-+        "./src/*"
-+      ]
-+    }
-   }
- }
+* 在`Typescript`中使用时,如果引入的路径为绝对路径如`@/uni_modules/zj-opencv`,需要修改`tsconfig.json`文件。
+```json
+{
+  "compilerOptions": {
+    ...
+    "paths": {
+      "@/*": [
+        "./src/*"
+      ]
+    }
+  },
+  ...
+}
 ```
+
+## 其他
+[opencv.js修改明细](https://github.com/zhangjian4/uniapp-opencv/blob/master/modify.md)

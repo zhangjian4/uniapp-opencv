@@ -17,7 +17,7 @@ cv.then(async () => {
     dst.delete();
 });
 ```
-具体可参考[Demo](/src/pages/index/index.vue)
+具体可参考[Demo](https://github.com/zhangjian4/uniapp-opencv/blob/master/src/pages/index/index.vue)
 
 ## 注意事项
 * 由于uniapp中部分方法需要异步调用,原`imread`和`imshow`方法改为了异步方法,返回的是`Promise`对象,调用时需要在前面加`await`或在`then`里面执行后续操作。
@@ -25,17 +25,19 @@ cv.then(async () => {
 * Mat对象用完一定要调用`delete`方法,否则会造成OOM。
 * 微信小程序中如果使用的不是2d的`canvas`,调试工具不支持`canvasPutImageData`,需要在真机中预览。
 * 在`Typescript`中使用时,如果引入的路径为绝对路径如`@/uni_modules/zj-opencv`,需要修改`tsconfig.json`文件。
-```diff
- {
-   "compilerOptions": {
-+    "paths": {
-+      "@/*": [
-+        "./src/*"
-+      ]
-+    }
-   }
- }
+```json
+{
+  "compilerOptions": {
+    ...
+    "paths": {
+      "@/*": [
+        "./src/*"
+      ]
+    }
+  },
+  ...
+}
 ```
 
 ## 其他
-[opencv.js修改明细](/modify.md)
+[opencv.js修改明细](https://github.com/zhangjian4/uniapp-opencv/blob/master/modify.md)

@@ -20,6 +20,9 @@ export default (function (root, factory) {
             },
         };
         // #endif
+        // #ifdef MP-TOUTIAO
+        var WebAssembly = TTWebAssembly;
+        // #endif
         // #ifdef MP-WEIXIN||APP-PLUS
         var performance = {
             now() {
@@ -778,6 +781,9 @@ export default (function (root, factory) {
             // #ifdef  MP-WEIXIN
             var wasmBinaryFile = '/uni_modules/zj-opencv/static/mp-weixin/opencv.wasm.br';
             // #endif
+            // #ifdef  MP-TOUTIAO
+            var wasmBinaryFile = '/uni_modules/zj-opencv/static/mp-toutiao/opencv.wasm';
+            // #endif
             // H5运行会把路径定位到/static/js/下
             // if (!isDataURI(wasmBinaryFile)) {
             //     wasmBinaryFile = locateFile(wasmBinaryFile);
@@ -849,6 +855,15 @@ export default (function (root, factory) {
                     return WXWebAssembly.instantiate(wasmBinaryFile, info).then(
                         receiveInstantiatedSource
                     );
+                    // #endif
+                    // #ifdef MP-TOUTIAO
+                    // 字节小程序要等第一个页面加载了才能调用,所以要加setTimeout
+                    setTimeout(function () {
+                        WebAssembly.instantiate(wasmBinaryFile, info).then(
+                            receiveInstantiatedSource
+                        );
+                    });
+                    return;
                     // #endif
                     // #ifdef H5||APP-PLUS
                     if (

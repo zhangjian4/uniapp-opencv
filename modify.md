@@ -72,6 +72,9 @@
 +            },
 +        };
 +        // #endif
++        // #ifdef MP-TOUTIAO
++        var WebAssembly = TTWebAssembly;
++        // #endif
 +        // #ifdef MP-WEIXIN||APP-PLUS
 +        var performance = {
 +            now() {
@@ -103,6 +106,9 @@
 +            // #ifdef  MP-WEIXIN
 +            var wasmBinaryFile = '/uni_modules/zj-opencv/static/mp-weixin/opencv.wasm.br';
 +            // #endif
++            // #ifdef  MP-TOUTIAO
++            var wasmBinaryFile = '/uni_modules/zj-opencv/static/mp-toutiao/opencv.wasm';
++            // #endif
 -            if (!isDataURI(wasmBinaryFile)) {
 -                wasmBinaryFile = locateFile(wasmBinaryFile);
 -            }
@@ -120,6 +126,7 @@
 ```
 
 * 微信小程序要用`WXWebAssembly.instantiate`方法传入路径,H5和APP用`WebAssembly.instantiateStreaming`
+* 字节小程序要等第一个页面加载了才能调用`TTWebAssembly.instantiate`,所以要加个`setTimeout`
 ```diff
                  function instantiateAsync() {
 +                    // #ifdef MP-WEIXIN
@@ -127,6 +134,12 @@
 +                        receiveInstantiatedSource
 +                    );
 +                    // #endif
++                    setTimeout(function () {
++                        WebAssembly.instantiate(wasmBinaryFile, info).then(
++                            receiveInstantiatedSource
++                        );
++                    });
++                    return;
 +                    // #ifdef H5||APP-PLUS
                      if (
                          !wasmBinary &&

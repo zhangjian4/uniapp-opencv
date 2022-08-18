@@ -23,7 +23,7 @@ export default (function (root, factory) {
         // #ifdef MP-TOUTIAO
         var WebAssembly = TTWebAssembly;
         // #endif
-        // #ifdef MP-WEIXIN||APP-PLUS
+        // #ifndef H5
         var performance = {
             now() {
                 return Date.now();
@@ -5560,7 +5560,6 @@ export default (function (root, factory) {
                 name = makeLegalFunctionName(name);
                 return (function (body) {
                     return function () {
-                        'use strict';
                         return body.apply(this, arguments);
                     };
                 })(body);

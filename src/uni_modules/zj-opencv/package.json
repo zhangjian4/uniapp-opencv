@@ -1,8 +1,8 @@
 {
   "id": "zj-opencv",
   "displayName": "zj-opencv",
-  "version": "1.0.0",
-  "main": "js_sdk/opencv.js",
+  "version": "1.0.2",
+  "main": "js_sdk/index.js",
   "types": "js_sdk/opencv.d.ts",
   "description": "适配uni-app的opencv.js",
   "keywords": [
@@ -69,13 +69,14 @@
           "微信": "y",
           "阿里": "u",
           "百度": "u",
-          "字节跳动": "u",
+          "字节跳动": {
+            "minVersion": "2.34.0"
+        },
           "QQ": "u",
           "钉钉": "u",
           "快手": "u",
           "飞书": "u",
-          "京东": "u",
-          "小红书": "u"
+        "京东": "u"
         },
         "快应用": {
           "华为": "u",

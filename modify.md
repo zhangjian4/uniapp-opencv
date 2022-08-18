@@ -52,8 +52,8 @@
 -        });
 -    else if (typeof exports === 'object') exports['cv'] = cv;
 -
--    if (typeof Module === 'undefined') var Module = {};
--    return cv(Module);
+     if (typeof Module === 'undefined') var Module = {};
+     return cv(Module);
 ```
 
 * 微信小程序中要用`WXWebAssembly`代替`WebAssembly`

@@ -38,6 +38,8 @@ cv.then(async () => {
   ...
 }
 ```
+* 字节小程序在调试工具上运行会报错，需要在真机上预览
+* 字节小程序不支持压缩过的wasm文件，由于上传的大小限制所以只编译了图像处理的模块
 
 ## 其他
 [opencv.js修改明细](https://github.com/zhangjian4/uniapp-opencv/blob/master/modify.md)

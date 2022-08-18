@@ -1,26 +1,34 @@
-(function (root, factory) {
-    if (typeof define === 'function' && define.amd) {
-        // AMD. Register as an anonymous module.
-        define(function () {
-            return (root.cv = factory());
-        });
-    } else if (typeof module === 'object' && module.exports) {
-        // Node. Does not work with strict CommonJS, but
-        // only CommonJS-like environments that support module.exports,
-        // like Node.
-        module.exports = factory();
-    } else if (typeof window === 'object') {
-        // Browser globals
-        root.cv = factory();
-    } else if (typeof importScripts === 'function') {
-        // Web worker
-        root.cv = factory();
-    } else {
-        // Other shells, e.g. d8
-        root.cv = factory();
-    }
+// #ifdef MP-WEIXIN
+import { TextDecoder } from 'text-encoder';
+// #endif
+// #ifdef APP-PLUS
+import { wasmBinaryFile } from './wasmBinaryFile';
+// #endif
+export default (function (root, factory) {
+    return factory();
 })(this, function () {
     var cv = (() => {
+        // #ifdef MP-WEIXIN
+        var WebAssembly = WXWebAssembly;
+        var crypto = {
+            getRandomValues(b) {
+                let byteRange = 256;
+                for (var i = 0; i < b.length; i++) {
+                    b[i] = Math.floor(byteRange * Math.random());
+                }
+            },
+        };
+        // #endif
+        // #ifdef MP-TOUTIAO
+        var WebAssembly = TTWebAssembly;
+        // #endif
+        // #ifndef H5
+        var performance = {
+            now() {
+                return Date.now();
+            },
+        };
+        // #endif
         var _scriptDir =
             typeof document !== 'undefined' && document.currentScript
                 ? document.currentScript.src
@@ -30,11 +38,11 @@
             cv = cv || {};
 
             var Module = typeof cv != 'undefined' ? cv : {};
-            var readyPromiseResolve, readyPromiseReject;
-            Module['ready'] = new Promise(function (resolve, reject) {
-                readyPromiseResolve = resolve;
-                readyPromiseReject = reject;
-            });
+            // var readyPromiseResolve, readyPromiseReject;
+            // Module['ready'] = new Promise(function (resolve, reject) {
+            //     readyPromiseResolve = resolve;
+            //     readyPromiseReject = reject;
+            // });
             var moduleOverrides = Object.assign({}, Module);
             var arguments_ = [];
             var thisProgram = './this.program';
@@ -413,8 +421,8 @@
                 ABORT = true;
                 EXITSTATUS = 1;
                 what += '. Build with -sASSERTIONS for more info.';
-                var e = new WebAssembly.RuntimeError(what);
-                readyPromiseReject(e);
+                var e = Error(what);
+                // readyPromiseReject(e);
                 throw e;
             }
             var dataURIPrefix = 'data:application/octet-stream;base64,';
@@ -424,10 +432,19 @@
             function isFileURI(filename) {
                 return filename.startsWith('file://');
             }
-            var wasmBinaryFile = '';
-            if (!isDataURI(wasmBinaryFile)) {
-                wasmBinaryFile = locateFile(wasmBinaryFile);
-            }
+            // #ifdef H5
+            var wasmBinaryFile = '/uni_modules/zj-opencv/static/h5/opencv.wasm';
+            // #endif
+            // #ifdef  MP-WEIXIN
+            var wasmBinaryFile = '/uni_modules/zj-opencv/static/mp-weixin/opencv.wasm.br';
+            // #endif
+            // #ifdef  MP-TOUTIAO
+            var wasmBinaryFile = '/uni_modules/zj-opencv/static/mp-toutiao/opencv.wasm';
+            // #endif
+            // H5运行会把路径定位到/static/js/下
+            // if (!isDataURI(wasmBinaryFile)) {
+            //     wasmBinaryFile = locateFile(wasmBinaryFile);
+            // }
             function getBinary(file) {
                 try {
                     if (file == wasmBinaryFile && wasmBinary) {
@@ -498,7 +515,9 @@
                 function instantiateArrayBuffer(receiver) {
                     return getBinaryPromise()
                         .then(function (binary) {
-                            return WebAssembly.instantiate(binary, info);
+                            var module = new WebAssembly.Module(binary);
+                            var instance = new WebAssembly.Instance(module, info);
+                            return { instance: instance };
                         })
                         .then(function (instance) {
                             return instance;
@@ -509,6 +528,23 @@
                         });
                 }
                 function instantiateAsync() {
+                    // #ifdef MP-WEIXIN
+                    return WXWebAssembly.instantiate(wasmBinaryFile, info).then(
+                        receiveInstantiationResult
+                    );
+                    // #endif
+                    // #ifdef MP-TOUTIAO
+                    // 字节小程序要等第一个页面加载了才能调用,所以要加setTimeout
+                    return new Promise(function (resolve, reject) {
+                        setTimeout(function () {
+                            WebAssembly.instantiate(wasmBinaryFile, info)
+                                .then(receiveInstantiationResult)
+                                .then(resolve)
+                                .catch(reject);
+                        });
+                    });
+                    // #endif
+                    // #ifdef H5||APP-PLUS
                     if (
                         !wasmBinary &&
                         typeof WebAssembly.instantiateStreaming == 'function' &&
@@ -530,6 +566,7 @@
                     } else {
                         return instantiateArrayBuffer(receiveInstantiationResult);
                     }
+                    // #endif
                 }
                 if (Module['instantiateWasm']) {
                     try {
@@ -540,7 +577,7 @@
                         return false;
                     }
                 }
-                instantiateAsync().catch(readyPromiseReject);
+                instantiateAsync();
                 return {};
             }
             var tempDouble;
@@ -3969,15 +4006,11 @@
             }
             function createNamedFunction(name, body) {
                 name = makeLegalFunctionName(name);
-                return new Function(
-                    'body',
-                    'return function ' +
-                        name +
-                        '() {\n' +
-                        '    "use strict";' +
-                        '    return body.apply(this, arguments);\n' +
-                        '};\n'
-                )(body);
+                return (function (body) {
+                    return function () {
+                        return body.apply(this, arguments);
+                    };
+                })(body);
             }
             function extendError(baseErrorType, errorName) {
                 var errorClass = createNamedFunction(errorName, function (message) {
@@ -5044,39 +5077,6 @@
                     }
                 }
                 var returns = argTypes[0].name !== 'void';
-                var argsList = '';
-                var argsListWired = '';
-                for (var i = 0; i < argCount - 2; ++i) {
-                    argsList += (i !== 0 ? ', ' : '') + 'arg' + i;
-                    argsListWired += (i !== 0 ? ', ' : '') + 'arg' + i + 'Wired';
-                }
-                var invokerFnBody =
-                    'return function ' +
-                    makeLegalFunctionName(humanName) +
-                    '(' +
-                    argsList +
-                    ') {\n' +
-                    'if (arguments.length !== ' +
-                    (argCount - 2) +
-                    ') {\n' +
-                    "throwBindingError('function " +
-                    humanName +
-                    " called with ' + arguments.length + ' arguments, expected " +
-                    (argCount - 2) +
-                    " args!');\n" +
-                    '}\n';
-                if (needsDestructorStack) {
-                    invokerFnBody += 'var destructors = [];\n';
-                }
-                var dtorStack = needsDestructorStack ? 'destructors' : 'null';
-                var args1 = [
-                    'throwBindingError',
-                    'invoker',
-                    'fn',
-                    'runDestructors',
-                    'retType',
-                    'classParam',
-                ];
                 var args2 = [
                     throwBindingError,
                     cppInvokerFunc,
@@ -5085,61 +5085,104 @@
                     argTypes[0],
                     argTypes[1],
                 ];
-                if (isClassMethodFunc) {
-                    invokerFnBody +=
-                        'var thisWired = classParam.toWireType(' + dtorStack + ', this);\n';
-                }
+
                 for (var i = 0; i < argCount - 2; ++i) {
-                    invokerFnBody +=
-                        'var arg' +
-                        i +
-                        'Wired = argType' +
-                        i +
-                        '.toWireType(' +
-                        dtorStack +
-                        ', arg' +
-                        i +
-                        '); // ' +
-                        argTypes[i + 2].name +
-                        '\n';
-                    args1.push('argType' + i);
                     args2.push(argTypes[i + 2]);
                 }
                 if (isClassMethodFunc) {
-                    argsListWired =
-                        'thisWired' + (argsListWired.length > 0 ? ', ' : '') + argsListWired;
-                }
-                invokerFnBody +=
-                    (returns ? 'var rv = ' : '') +
-                    'invoker(fn' +
-                    (argsListWired.length > 0 ? ', ' : '') +
-                    argsListWired +
-                    ');\n';
-                if (needsDestructorStack) {
-                    invokerFnBody += 'runDestructors(destructors);\n';
-                } else {
-                    for (var i = isClassMethodFunc ? 1 : 2; i < argTypes.length; ++i) {
-                        var paramName = i === 1 ? 'thisWired' : 'arg' + (i - 2) + 'Wired';
+                    for (var i = 1; i < argCount; ++i) {
                         if (argTypes[i].destructorFunction !== null) {
-                            invokerFnBody +=
-                                paramName +
-                                '_dtor(' +
-                                paramName +
-                                '); // ' +
-                                argTypes[i].name +
-                                '\n';
-                            args1.push(paramName + '_dtor');
                             args2.push(argTypes[i].destructorFunction);
+                        } else {
+                            args2.push(null);
+                        }
+                    }
+                } else {
+                    for (var i = 2; i < argCount; ++i) {
+                        if (argTypes[i].destructorFunction !== null) {
+                            args2.push(argTypes[i].destructorFunction);
+                        } else {
+                            args2.push(null);
                         }
                     }
                 }
-                if (returns) {
-                    invokerFnBody += 'var ret = retType.fromWireType(rv);\n' + 'return ret;\n';
-                } else {
-                }
-                invokerFnBody += '}\n';
-                args1.push(invokerFnBody);
-                var invokerFunction = new_(Function, args1).apply(null, args2);
+                var invokerFunction = function (
+                    throwBindingError,
+                    invoker,
+                    fn,
+                    runDestructors,
+                    retType,
+                    classParam
+                ) {
+                    // argType0,argType1,argType2
+                    const argsTypeOrigin = Array.prototype.slice.call(
+                        arguments,
+                        6,
+                        6 + argCount - 2
+                    );
+                    // arg0Wired_dtor
+                    const argsWired_dtorOrigin = Array.prototype.slice.call(
+                        arguments,
+                        6 + argCount - 2
+                    );
+
+                    return function () {
+                        // arg0, arg1, arg2
+                        if (arguments.length !== argCount - 2) {
+                            throwBindingError(
+                                'function ' +
+                                    humanName +
+                                    ' called with ' +
+                                    arguments.length +
+                                    ' arguments, expected 0 args!'
+                            );
+                        }
+                        var thisWired;
+                        if (isClassMethodFunc) {
+                            if (needsDestructorStack) {
+                                var destructors = [];
+                                thisWired = classParam.toWireType(destructors, this);
+                            } else {
+                                thisWired = classParam.toWireType(null, this);
+                            }
+                        }
+
+                        // arg0Wired,arg1Wired,arg2Wired
+                        var argsWired = [];
+                        for (var i = 0; i < arguments.length; i++) {
+                            argsWired.push(argsTypeOrigin[i].toWireType(null, arguments[i]));
+                        }
+
+                        var rv;
+                        if (isClassMethodFunc) {
+                            rv = invoker(fn, thisWired, ...argsWired);
+                        } else {
+                            rv = invoker(fn, ...argsWired);
+                        }
+
+                        if (needsDestructorStack) {
+                            runDestructors(destructors);
+                        } else {
+                            if (isClassMethodFunc) {
+                                for (var i = 1; i < argTypes.length; ++i) {
+                                    if (argTypes[i].destructorFunction !== null) {
+                                        argsWired_dtorOrigin[i - 1](thisWired);
+                                    }
+                                }
+                            } else {
+                                for (var i = 2; i < argTypes.length; ++i) {
+                                    if (argTypes[i].destructorFunction !== null) {
+                                        argsWired_dtorOrigin[i - 2](argsWired[i - 2]);
+                                    }
+                                }
+                            }
+                        }
+                        if (returns) {
+                            var ret = retType.fromWireType(rv);
+                            return ret;
+                        }
+                    };
+                }.apply(null, args2);
                 return invokerFunction;
             }
             function heap32VectorToArray(count, firstElement) {
@@ -6934,6 +6977,18 @@
             Module['FS_createDevice'] = FS.createDevice;
             Module['FS_unlink'] = FS.unlink;
             var calledRun;
+            Module['then'] = function (func) {
+                if (calledRun) {
+                    func(Module);
+                } else {
+                    var old = Module['onRuntimeInitialized'];
+                    Module['onRuntimeInitialized'] = function () {
+                        if (old) old();
+                        func(Module);
+                    };
+                }
+                return Module;
+            };
             dependenciesFulfilled = function runCaller() {
                 if (!calledRun) run();
                 if (!calledRun) dependenciesFulfilled = runCaller;
@@ -6953,7 +7008,7 @@
                     Module['calledRun'] = true;
                     if (ABORT) return;
                     initRuntime();
-                    readyPromiseResolve(Module);
+                    // readyPromiseResolve(null);
                     if (Module['onRuntimeInitialized']) Module['onRuntimeInitialized']();
                     postRun();
                 }
@@ -6979,7 +7034,49 @@
             if (typeof Module.FS === 'undefined' && typeof FS !== 'undefined') {
                 Module.FS = FS;
             }
+            function queryNodeInfo(source) {
+                return new Promise(function (resolve) {
+                    if (typeof source === 'string') {
+                        uni.createSelectorQuery()
+                            .select('#' + source)
+                            .fields({ context: true, size: true, node: true }, function (nodeInfo) {
+                                resolve(nodeInfo);
+                            })
+                            .exec();
+                    } else {
+                        return source;
+                    }
+                });
+            }
             Module['imread'] = function (imageSource) {
+                return queryNodeInfo(imageSource)
+                    .then(function (result) {
+                        if (!result || (result.nodeCanvasType !== '2d' && !result.context)) {
+                            throw new Error('Please input the valid canvas id.');
+                        }
+                        if (result.nodeCanvasType === '2d') {
+                            var canvas = result.node;
+                            var context = canvas.getContext('2d');
+                            var imgData = context.getImageData(0, 0, canvas.width, canvas.height);
+                            return imgData;
+                        } else {
+                            var context = result.context;
+                            return new Promise(function (resolve, reject) {
+                                uni.canvasGetImageData({
+                                    canvasId: context.canvasId || context.id,
+                                    x: 0,
+                                    y: 0,
+                                    width: result.width,
+                                    height: result.height,
+                                    success: resolve,
+                                    fail: reject,
+                                });
+                            });
+                        }
+                    })
+                    .then(function (imgData) {
+                        return cv.matFromImageData(imgData);
+                    });
                 var img = null;
                 if (typeof imageSource === 'string') {
                     img = document.getElementById(imageSource);
@@ -7004,7 +7101,68 @@
                 var imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
                 return cv.matFromImageData(imgData);
             };
+            function imageDataFromMat(mat) {
+                if (!(mat instanceof cv.Mat)) {
+                    throw new Error('Please input the valid cv.Mat instance.');
+                }
+                var img = new cv.Mat();
+                var depth = mat.type() % 8;
+                var scale = depth <= cv.CV_8S ? 1 : depth <= cv.CV_32S ? 1 / 256 : 255;
+                var shift = depth === cv.CV_8S || depth === cv.CV_16S ? 128 : 0;
+                mat.convertTo(img, cv.CV_8U, scale, shift);
+                switch (img.type()) {
+                    case cv.CV_8UC1:
+                        cv.cvtColor(img, img, cv.COLOR_GRAY2RGBA);
+                        break;
+                    case cv.CV_8UC3:
+                        cv.cvtColor(img, img, cv.COLOR_RGB2RGBA);
+                        break;
+                    case cv.CV_8UC4:
+                        break;
+                    default:
+                        throw new Error(
+                            'Bad number of channels (Source image must have 1, 3 or 4 channels)'
+                        );
+                }
+                var imgData = {
+                    data: new Uint8ClampedArray(img.data),
+                    width: img.cols,
+                    height: img.rows,
+                };
+                img.delete();
+                return imgData;
+            }
+            Module['imageDataFromMat'] = imageDataFromMat;
             Module['imshow'] = function (canvasSource, mat) {
+                return queryNodeInfo(canvasSource).then(function (result) {
+                    if (!result || (result.nodeCanvasType !== '2d' && !result.context)) {
+                        throw new Error('Please input the valid canvas id.');
+                    }
+                    var imgData = imageDataFromMat(mat);
+                    if (result.nodeCanvasType === '2d') {
+                        var canvas = result.node;
+                        var context = canvas.getContext('2d');
+                        var imageData = context.createImageData(imgData.width, imgData.height);
+                        imageData.data.set(imgData.data);
+                        canvas.width = imgData.width;
+                        canvas.height = imgData.height;
+                        context.putImageData(imageData, 0, 0);
+                    } else {
+                        var context = result.context;
+                        return new Promise(function (resolve, reject) {
+                            uni.canvasPutImageData({
+                                canvasId: context.canvasId || context.id,
+                                x: 0,
+                                y: 0,
+                                width: imgData.width,
+                                height: imgData.height,
+                                data: imgData.data,
+                                success: resolve,
+                                fail: reject,
+                            });
+                        });
+                    }
+                });
                 var canvas = null;
                 if (typeof canvasSource === 'string') {
                     canvas = document.getElementById(canvasSource);
@@ -7306,17 +7464,10 @@
                 mat.data.set(imageData.data);
                 return mat;
             };
-
-            return cv.ready;
+            return cv;
         };
     })();
-    if (typeof exports === 'object' && typeof module === 'object') module.exports = cv;
-    else if (typeof define === 'function' && define['amd'])
-        define([], function () {
-            return cv;
-        });
-    else if (typeof exports === 'object') exports['cv'] = cv;
 
-    if (typeof Module === 'undefined') Module = {};
+    if (typeof Module === 'undefined') var Module = {};
     return cv(Module);
 });

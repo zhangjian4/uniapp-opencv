@@ -3,7 +3,7 @@
 * 微信小程序没有`TextDecoder`
 ```diff
 +// #ifdef MP-WEIXIN
-+import { TextDecoder } from 'text-encoder';
++import { TextDecoder } from './text-encoder';
 +// #endif
 ```
 
@@ -119,10 +119,14 @@
                      return getBinaryPromise()
                          .then(function (binary) {
 -                            return WebAssembly.instantiate(binary, info);
-+                            var module = new WebAssembly.Module(binary);
-+                            var instance = new WebAssembly.Instance(module, info);
-+                            return { instance: instance };
-                         })
++                            if (ENVIRONMENT_IS_WEB) {
++                                return WebAssembly.instantiate(binary, info);
++                            } else {
++                                var module = new WebAssembly.Module(binary);
++                                var instance = new WebAssembly.Instance(module, info);
++                                return { instance: instance };
++                            }
++                         })
 ```
 
 * 微信小程序要用`WXWebAssembly.instantiate`方法传入路径,H5和APP用`WebAssembly.instantiateStreaming`

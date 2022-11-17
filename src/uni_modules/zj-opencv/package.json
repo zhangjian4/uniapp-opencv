@@ -1,7 +1,7 @@
 {
   "id": "zj-opencv",
   "displayName": "zj-opencv",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "main": "js_sdk/index.js",
   "types": "js_sdk/opencv.d.ts",
   "description": "适配uni-app的opencv.js",
@@ -12,11 +12,7 @@
   "engines": {
     "HBuilderX": "^3.1.0"
   },
-  "dcloudext": {
-    "category": [
-        "JS SDK",
-        "通用 SDK"
-    ],
+"dcloudext": {
     "sale": {
       "regular": {
         "price": "0.00"
@@ -33,7 +29,8 @@
       "data": "插件不采集任何数据",
       "permissions": "无"
     },
-    "npmurl": ""
+    "npmurl": "",
+    "type": "sdk-js"
   },
   "uni_modules": {
     "dependencies": [],
